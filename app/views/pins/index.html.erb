@@ -27,19 +27,9 @@
   <% end %>
   </tbody>
 </table>
-
 <br>
-<hr>
-
-
-<br>
-<hr>
-
-
-
 <%= link_to 'New Pin', new_pin_path %>
-
-<br><br>
+<br>
 <hr>
 
 <script type="text/javascript">
@@ -47,7 +37,7 @@
 
         var mapCenter = new google.maps.LatLng(31.5546, 74.3572); //Google map Coordinates
         var map;
-
+        var marker;
         var newLat;
         var newLng;
 
@@ -70,13 +60,7 @@
 
             map = new google.maps.Map(document.getElementById("google_map"), googleMapOptions);
 
-
-
-
-
-
-            // Getting markers from database through ajax call.
-
+            //Load markers from database through ajax call.
             $.ajax({
                 type: "GET",
                 url: "/pins",
@@ -92,46 +76,64 @@
             });
 
 
-
-
-
-
-
-            //Load Markers from the XML File, Check (map_process.php)
-//            $.get("map_process.php", function (data) {
-//                $(data).find("marker").each(function () {
-//                    var name = $(this).attr('name');
-//                    var address = '<p>' + $(this).attr('address') + '</p>';
-////                    var type = $(this).attr('type');
-//                    var point = new google.maps.LatLng(parseFloat($(this).attr('lat')), parseFloat($(this).attr('lng')));
-//                    create_marker(point, name, address, false, false, false, "icons/pin_blue.png");
-//                });
-//            });
-
-
-            //Generate new LatLng after dragged marker
-
-//            google.maps.event.addListener(marker, 'dragend', function(ev){
-//                alert(MapPos.lat() + ' ' + MapPos.lng()); // always the same LatLng-Object...
-//                var newLat = (marker.getPosition().lat()); // new LatLng-Object after dragend-event...
-//                var newLng = (marker.getPosition().lat()); // new LatLng-Object after dragend-event...
-//            });
-//            $('#newlat').val(newLat);
-//
-//            alert(newLat);
-
-
-
-
             //Right Click to Drop a New Marker
             google.maps.event.addListener(map, 'rightclick', function (event) {
                 //Edit form to be displayed with new marker
-
                 var latti = event.latLng.lat();
                 var longi = event.latLng.lng();
 
-
                 $.ajax({ url:'http://maps.googleapis.com/maps/api/geocode/json?latlng='+ latti +' ' +longi+ ' ',
+                    success: function(data){
+
+                        var ad = data.results[0].formatted_address
+                        $('#address').val(ad);
+                      /*or you could iterate the components for only the city and state*/
+                    }
+                });
+
+                var edit_form = '<p><div class="marker-edit">' +
+                    '<form  method="POST" name="SaveMarker" id="SaveMarker">' +
+                    '<label><span>Lat :</span><input type="text" id="newLat"  name="save-lat" class="save-lat" value=' + latti +' disabled /></label>' +
+                    '<label><span>Lng :</span><input type="text" id="newLng" name="save-lng" class="save-lng" value=' + longi +' disabled /></label>' +
+                    '<label for="pName"><span>Place Name :</span><input type="text" name="pName" class="save-name" placeholder="Enter Title" maxlength="40" /></label>' +
+                    '<label for="pDesc"><span>Address :</span><textarea id="address" disabled="disabled" name="pDesc" class="save-desc" placeholder="Enter Address" maxlength="150"></textarea></label>' +
+                    '</form>' +
+                    '</div></p><button name="save-marker"  class="save-marker">Save Marker Details</button>';
+
+                //Drop a new Marker with our Edit Form
+                create_marker(event.latLng, 'New Marker', edit_form, true, true, true, "icons/pin_green.png");
+
+
+            });
+
+        }
+
+
+
+        //############### Create Marker Function ##############
+        function create_marker(MapPos, MapTitle, MapDesc, InfoOpenDefault, DragAble, Removable, iconPath) {
+
+            //new marker
+             var marker = new google.maps.Marker({
+                position: MapPos,
+                map: map,
+                draggable:DragAble,
+                animation: google.maps.Animation.DROP,
+                title:"Hello World!",
+                icon: iconPath
+            });
+
+            //Generate new LatLng after dragged marker
+            google.maps.event.addListener(marker, 'dragend', function(ev){
+//                alert(MapPos.lat() + ' ' + MapPos.lng()); // always the same LatLng-Object...
+                var newLat = (marker.getPosition().lat()); // new LatLng-Object after dragend-event...
+                var newLng = (marker.getPosition().lng()); // new LatLng-Object after dragend-event...
+                $('#newLat').val(newLat);
+                $('#newLng').val(newLng);
+
+
+
+                $.ajax({ url:'http://maps.googleapis.com/maps/api/geocode/json?latlng='+ newLat +' ' + newLng+ ' ',
                     success: function(data){
 
                         var ad = data.results[0].formatted_address
@@ -141,70 +143,7 @@
                     }
                 });
 
-                $('#lat').val(latti);
-
-            // Address
-
-
-                var edit_form = '<p><div class="marker-edit">' +
-                    '<form  method="POST" name="SaveMarker" id="SaveMarker">' +
-                    '<label><span>Lat :</span><input type="text" id="newLat"  name="save-lat" class="save-lat" value=' + latti +' disabled /></label>' +
-                    '<label><span>Lng :</span><input type="text" id="newLng" name="save-lng" class="save-lng" value=' + longi +' disabled /></label>' +
-                    '<label for="pName"><span>Place Name :</span><input type="text" name="pName" class="save-name" placeholder="Enter Title" maxlength="40" /></label>' +
-                    '<label for="pDesc"><span>Address :</span><textarea id="address" name="pDesc" class="save-desc" placeholder="Enter Address" maxlength="150"></textarea></label>' +
-                    '</form>' +
-                    '</div></p><button name="save-marker"  class="save-marker">Save Marker Details</button>';
-
-                //Drop a new Marker with our Edit Form
-                create_marker(event.latLng, 'New Marker', edit_form, true, true, true, "icons/pin_green.png");
-
-                //Generate new LatLng after dragged marker
-
-                google.maps.event.addListener(marker, 'dragend', function(ev){
-//                alert(MapPos.lat() + ' ' + MapPos.lng()); // always the same LatLng-Object...
-                    var newLat = (marker.getPosition().lat()); // new LatLng-Object after dragend-event...
-                    var newLng = (marker.getPosition().lng()); // new LatLng-Object after dragend-event...
-                    $('#newLat').val(newLat);
-                    $('#newLng').val(newLng);
-
-                    $.ajax({ url:'http://maps.googleapis.com/maps/api/geocode/json?latlng='+ newLat +' ' + newLng+ ' ',
-                        success: function(data){
-
-                            var ad = data.results[0].formatted_address
-                            $('#address').val(ad);
-
-
-                          /*or you could iterate the components for only the city and state*/
-                        }
-                    });
-
-
-
-                });
-
-
             });
-
-        }
-
-
-        //############### Create Marker Function ##############
-        function create_marker(MapPos, MapTitle, MapDesc, InfoOpenDefault, DragAble, Removable, iconPath) {
-
-            //new marker
-             marker = new google.maps.Marker({
-                position: MapPos,
-                map: map,
-                draggable: DragAble,
-                animation: google.maps.Animation.DROP,
-                title: 'name',
-                icon: iconPath
-            });
-
-
-
-
-//            document.write("New Lat is: " + newLatLng[0]);
 
 
 
@@ -215,7 +154,6 @@
                 MapDesc +
                 '</span><button name="remove-marker" class="remove-marker" title="Remove Marker">Remove Marker</button>' +
                 '</div></div>');
-
 
             //Create an infoWindow
             var infowindow = new google.maps.InfoWindow();
@@ -238,19 +176,19 @@
                 google.maps.event.addDomListener(saveBtn, "click", function (event) {
                     var mReplace = contentString.find('span.info-content'); //html to be replaced after success
                     var mName = contentString.find('input.save-name')[0].value; //name input field value
-                    var mDesc = contentString.find('textarea.save-desc')[0].value; //description input field value
+                    var mAdd = contentString.find('textarea.save-desc')[0].value; // Address field value
                     var mLat =  contentString.find ('input.save-lat')[0].value;
                     var mLng =  contentString.find ('input.save-lng')[0].value;
 
 
-                    if (mName == '' || mDesc == '' ) {
-                        alert("Please enter Name and Description!");
+                    if (mName == '') {
+                        alert("Please enter Name !");
                     } else {
-                        alert('Name'+mName+'Address'+ mDesc+'lat'+mLat+'lng'+mLng); //call save marker function
+                        //call save marker function
                     var    myData = {
                             "pin":{
                                 name: mName,
-                                address: mDesc,
+                                address: mAdd,
                                 lat: mLat,
                                 lng: mLng
 
@@ -287,6 +225,8 @@
             {
                 infowindow.open(map, marker);
             }
+
+
         }
 
 
@@ -320,11 +260,6 @@
             }
 
         }
-
-
-
-
-
 
     });
 
@@ -410,18 +345,9 @@
 </style>
 
 
-<h1 class="heading">My Google Map</h1>
+<h1 class="heading">Google Map</h1>
 <div align="center">Right Click to Drop a New Marker</div>
 <div id="google_map"></div>
-<br/>
-<br/>
-<br/>
-<br/>
-<br/>
-<br/>
-<br/>
-<br/>
-<br/>
 <br/>
 <br/>
 <br/>

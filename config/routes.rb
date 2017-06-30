@@ -3,7 +3,7 @@ Rails.application.routes.draw do
   resources :places
   resources :users
 
-  root 'users#index'
+  root 'pins#index'
 
 
   # resources :users
