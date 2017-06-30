@@ -1,0 +1,427 @@
+<script type="text/javascript" src="http://maps.googleapis.com/maps/api/js?key=AIzaSyBPiaGnwVXDfXRuivOxXE8hH7xzZXBu1ew"></script>
+<p id="notice"><%= notice %></p>
+
+<h1>Pins</h1>
+<table>
+  <thead>
+  <tr>
+    <th>Name</th>
+    <th>Address</th>
+    <th>Lat</th>
+    <th>Lng</th>
+    <th colspan="3"></th>
+  </tr>
+  </thead>
+
+  <tbody>
+  <% @pins.each do |pin| %>
+      <tr>
+        <td><%= pin.name %></td>
+        <td><%= pin.address %></td>
+        <td><%= pin.lat %></td>
+        <td><%= pin.lng %></td>
+        <td><%= link_to 'Show', pin %></td>
+        <td><%= link_to 'Edit', edit_pin_path(pin) %></td>
+        <td><%= link_to 'Destroy', pin, method: :delete, data: {confirm: 'Are you sure?'} %></td>
+      </tr>
+  <% end %>
+  </tbody>
+</table>
+
+<br>
+<hr>
+
+
+<br>
+<hr>
+
+
+
+<%= link_to 'New Pin', new_pin_path %>
+
+<br><br>
+<hr>
+
+<script type="text/javascript">
+    $(document).ready(function () {
+
+        var mapCenter = new google.maps.LatLng(31.5546, 74.3572); //Google map Coordinates
+        var map;
+
+        var newLat;
+        var newLng;
+
+        map_initialize(); // initialize google map
+
+        //############### Google Map Initialize ##############
+        function map_initialize() {
+            var googleMapOptions =
+                {
+                    center: mapCenter, // map center
+                    zoom: 12, //zoom level, 0 = earth view to higher value
+                    maxZoom: 30,
+                    minZoom: 4,
+                    zoomControlOptions: {
+                        style: google.maps.ZoomControlStyle.SMALL //zoom control size
+                    },
+                    scaleControl: true, // enable scale control
+                    mapTypeId: google.maps.MapTypeId.ROADMAP // google map type
+                };
+
+            map = new google.maps.Map(document.getElementById("google_map"), googleMapOptions);
+
+
+
+
+
+
+            // Getting markers from database through ajax call.
+
+            $.ajax({
+                type: "GET",
+                url: "/pins",
+                dataType: "json",
+                success:  function(data){
+                    $(data).each(function (object) {
+                        var name = data[object].name;
+                        var address = data[object].address;
+                        var point = new google.maps.LatLng(parseFloat(data[object].lat), parseFloat(data[object].lng));
+                        create_marker(point, name, address,false,false, false, "icons/pin_blue.png");
+                    });
+                }
+            });
+
+
+
+
+
+
+
+            //Load Markers from the XML File, Check (map_process.php)
+//            $.get("map_process.php", function (data) {
+//                $(data).find("marker").each(function () {
+//                    var name = $(this).attr('name');
+//                    var address = '<p>' + $(this).attr('address') + '</p>';
+////                    var type = $(this).attr('type');
+//                    var point = new google.maps.LatLng(parseFloat($(this).attr('lat')), parseFloat($(this).attr('lng')));
+//                    create_marker(point, name, address, false, false, false, "icons/pin_blue.png");
+//                });
+//            });
+
+
+            //Generate new LatLng after dragged marker
+
+//            google.maps.event.addListener(marker, 'dragend', function(ev){
+//                alert(MapPos.lat() + ' ' + MapPos.lng()); // always the same LatLng-Object...
+//                var newLat = (marker.getPosition().lat()); // new LatLng-Object after dragend-event...
+//                var newLng = (marker.getPosition().lat()); // new LatLng-Object after dragend-event...
+//            });
+//            $('#newlat').val(newLat);
+//
+//            alert(newLat);
+
+
+
+
+            //Right Click to Drop a New Marker
+            google.maps.event.addListener(map, 'rightclick', function (event) {
+                //Edit form to be displayed with new marker
+
+                var latti = event.latLng.lat();
+                var longi = event.latLng.lng();
+
+
+                $.ajax({ url:'http://maps.googleapis.com/maps/api/geocode/json?latlng='+ latti +' ' +longi+ ' ',
+                    success: function(data){
+
+                        var ad = data.results[0].formatted_address
+                        $('#address').val(ad);
+
+                      /*or you could iterate the components for only the city and state*/
+                    }
+                });
+
+                $('#lat').val(latti);
+
+            // Address
+
+
+                var edit_form = '<p><div class="marker-edit">' +
+                    '<form  method="POST" name="SaveMarker" id="SaveMarker">' +
+                    '<label><span>Lat :</span><input type="text" id="newLat"  name="save-lat" class="save-lat" value=' + latti +' disabled /></label>' +
+                    '<label><span>Lng :</span><input type="text" id="newLng" name="save-lng" class="save-lng" value=' + longi +' disabled /></label>' +
+                    '<label for="pName"><span>Place Name :</span><input type="text" name="pName" class="save-name" placeholder="Enter Title" maxlength="40" /></label>' +
+                    '<label for="pDesc"><span>Address :</span><textarea id="address" name="pDesc" class="save-desc" placeholder="Enter Address" maxlength="150"></textarea></label>' +
+                    '</form>' +
+                    '</div></p><button name="save-marker"  class="save-marker">Save Marker Details</button>';
+
+                //Drop a new Marker with our Edit Form
+                create_marker(event.latLng, 'New Marker', edit_form, true, true, true, "icons/pin_green.png");
+
+                //Generate new LatLng after dragged marker
+
+                google.maps.event.addListener(marker, 'dragend', function(ev){
+//                alert(MapPos.lat() + ' ' + MapPos.lng()); // always the same LatLng-Object...
+                    var newLat = (marker.getPosition().lat()); // new LatLng-Object after dragend-event...
+                    var newLng = (marker.getPosition().lng()); // new LatLng-Object after dragend-event...
+                    $('#newLat').val(newLat);
+                    $('#newLng').val(newLng);
+
+                    $.ajax({ url:'http://maps.googleapis.com/maps/api/geocode/json?latlng='+ newLat +' ' + newLng+ ' ',
+                        success: function(data){
+
+                            var ad = data.results[0].formatted_address
+                            $('#address').val(ad);
+
+
+                          /*or you could iterate the components for only the city and state*/
+                        }
+                    });
+
+
+
+                });
+
+
+            });
+
+        }
+
+
+        //############### Create Marker Function ##############
+        function create_marker(MapPos, MapTitle, MapDesc, InfoOpenDefault, DragAble, Removable, iconPath) {
+
+            //new marker
+             marker = new google.maps.Marker({
+                position: MapPos,
+                map: map,
+                draggable: DragAble,
+                animation: google.maps.Animation.DROP,
+                title: 'name',
+                icon: iconPath
+            });
+
+
+
+
+//            document.write("New Lat is: " + newLatLng[0]);
+
+
+
+            //Content structure of info Window for the Markers
+            var contentString = $('<div class="marker-info-win">' +
+                '<div class="marker-inner-win"><span class="info-content">' +
+                '<h1 class="marker-heading">' + MapTitle + '</h1>' +
+                MapDesc +
+                '</span><button name="remove-marker" class="remove-marker" title="Remove Marker">Remove Marker</button>' +
+                '</div></div>');
+
+
+            //Create an infoWindow
+            var infowindow = new google.maps.InfoWindow();
+            //set the content of infoWindow
+            infowindow.setContent(contentString[0]);
+
+            //Find remove button in infoWindow
+            var removeBtn = contentString.find('button.remove-marker')[0];
+            var saveBtn = contentString.find('button.save-marker')[0];
+
+            //add click listner to remove marker button
+            google.maps.event.addDomListener(removeBtn, "click", function (event) {
+                remove_marker(marker);
+            });
+
+
+            if (typeof saveBtn !== 'undefined') //continue only when save button is present
+            {
+                //add click listner to save marker button
+                google.maps.event.addDomListener(saveBtn, "click", function (event) {
+                    var mReplace = contentString.find('span.info-content'); //html to be replaced after success
+                    var mName = contentString.find('input.save-name')[0].value; //name input field value
+                    var mDesc = contentString.find('textarea.save-desc')[0].value; //description input field value
+                    var mLat =  contentString.find ('input.save-lat')[0].value;
+                    var mLng =  contentString.find ('input.save-lng')[0].value;
+
+
+                    if (mName == '' || mDesc == '' ) {
+                        alert("Please enter Name and Description!");
+                    } else {
+                        alert('Name'+mName+'Address'+ mDesc+'lat'+mLat+'lng'+mLng); //call save marker function
+                    var    myData = {
+                            "pin":{
+                                name: mName,
+                                address: mDesc,
+                                lat: mLat,
+                                lng: mLng
+
+                            }
+                        };
+                        $.ajax({
+                            type: "POST",
+                            url: "/pins",
+                            data: myData,
+                            dataType:'json',
+                            success:function(data){
+                                var str = '<strong>' + myData.pin.name + '</strong>' +'<br><hr><div style="width:180px;">' + myData.pin.address + '</div><br>';
+                              mReplace.html(str); //replace info window with new htmlmReplace.html(myData.pin.name );
+                                marker.setDraggable(false); //set marker to fixed
+                                marker.setIcon('icons/pin_blue.png'); //replace icon
+                            },
+                            error:function (xhr, ajaxOptions, thrownError){
+                                alert(thrownError); //throw any errors
+                            }
+                        });
+
+
+
+                    }
+                });
+            }
+
+            //add click listner to save marker button
+            google.maps.event.addListener(marker, 'click', function () {
+                infowindow.open(map, marker); // click on marker opens info window
+            });
+
+            if (InfoOpenDefault) //whether info window should be open by default
+            {
+                infowindow.open(map, marker);
+            }
+        }
+
+
+        //############### Remove Marker Function ##############
+        function remove_marker(Marker)
+        {
+
+          /* determine whether marker is draggable
+           new markers are draggable and saved markers are fixed */
+            if(Marker.getDraggable())
+            {
+                Marker.setMap(null); //just remove new marker
+            }
+            else
+            {
+                //Remove saved marker from DB and map using jQuery Ajax
+                var mLatLang = Marker.getPosition().toUrlValue(); //get marker position
+                var myData = {delete : 'true', latlang : mLatLang}; //post variables
+                $.ajax({
+                    type: "DELETE",
+                    url: "/pins",
+                    data: myData,
+                    success:function(data){
+                        marker.setMap(null);
+                        console.log(data);
+                    },
+                    error:function (xhr, ajaxOptions, thrownError){
+                        alert(thrownError); //throw any errors
+                    }
+                });
+            }
+
+        }
+
+
+
+
+
+
+    });
+
+</script>
+
+
+<style type="text/css">
+  h1.heading {
+    padding: 0px;
+    margin: 0px 0px 10px 0px;
+    text-align: center;
+    font: 18px Georgia, "Times New Roman", Times, serif;
+  }
+
+  /* width and height of google map */
+  #google_map {
+    width: 70%;
+    height: 450px;
+    margin-top: 0px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  /* Marker Edit form */
+  .marker-edit label {
+    display: block;
+    margin-bottom: 5px;
+  }
+
+  .marker-edit label span {
+    width: 100px;
+    float: left;
+  }
+
+  .marker-edit label input, .marker-edit label select {
+    height: 24px;
+  }
+
+  .marker-edit label textarea {
+    height: 60px;
+  }
+
+  .marker-edit label input, .marker-edit label select, .marker-edit label textarea {
+    width: 60%;
+    margin: 0px;
+    padding-left: 5px;
+    border: 1px solid #DDD;
+    border-radius: 3px;
+  }
+
+  /* Marker Info Window */
+  h1.marker-heading {
+    color: #585858;
+    margin: 0px;
+    padding: 0px;
+    font: 18px "Trebuchet MS", Arial;
+    border-bottom: 1px dotted #D8D8D8;
+  }
+
+  div.marker-info-win {
+    max-width: 300px;
+    margin-right: -20px;
+  }
+
+  div.marker-info-win p {
+    padding: 0px;
+    margin: 10px 0px 10px 0;
+  }
+
+  div.marker-inner-win {
+    padding: 5px;
+  }
+
+  button.save-marker, button.remove-marker {
+    border: none;
+    background: rgba(0, 0, 0, 0);
+    color: #00F;
+    padding: 0px;
+    text-decoration: underline;
+    margin-right: 10px;
+    cursor: pointer;
+  }
+</style>
+
+
+<h1 class="heading">My Google Map</h1>
+<div align="center">Right Click to Drop a New Marker</div>
+<div id="google_map"></div>
+<br/>
+<br/>
+<br/>
+<br/>
+<br/>
+<br/>
+<br/>
+<br/>
+<br/>
+<br/>
+<br/>
+<br/>

@@ -1,0 +1,9 @@
+default: &default
+ adapter: mysql2
+ pool: 25
+ username: root
+ password: root
+ host: localhost
+development:
+ <<: *default
+ database: blog1

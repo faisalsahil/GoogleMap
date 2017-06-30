@@ -1,0 +1,73 @@
+
+
+<p id="notice"><%= notice %></p>
+
+<h1>Users</h1>
+
+<table>
+  <thead>
+    <tr>
+      <th>Latitude</th>
+      <th>Longitude</th>
+      <th>Address</th>
+      <th>Description</th>
+      <th>Title</th>
+      <th colspan="3"></th>
+    </tr>
+  </thead>
+
+  <tbody>
+    <% @users.each do |user| %>
+      <tr>
+        <td><%= user.latitude %></td>
+        <td><%= user.longitude %></td>
+        <td><%= user.address %></td>
+        <td><%= user.description %></td>
+        <td><%= user.title %></td>
+        <td><%= link_to 'Show', user %></td>
+        <td><%= link_to 'Edit', edit_user_path(user) %></td>
+        <td><%= link_to 'Destroy', user, method: :delete, data: { confirm: 'Are you sure?' } %></td>
+      </tr>
+    <% end %>
+  </tbody>
+</table>
+
+<!--<div id="map_canvas" style="width:50%; height:50%"></div>-->
+
+<!--<div id="latlong">-->
+  <!--<p>Latitude: <input size="20" type="text" id="lat" name="lat" ></p>-->
+  <!--<p>Longitude: <input size="20" type="text" id="lng" name="lng" ></p>-->
+<!--</div>-->
+
+<br>
+
+<%= link_to 'New User', new_user_path %>
+
+<br><br>
+<div style='width: 800px;'>
+  <div id="map" style='width: 800px; height: 400px;'></div>
+</div>
+<div id="form">
+  <table>
+    <tr><td>Address:</td> <td><input type='text' id='name'/> </td> </tr>
+    <tr><td>Description:</td> <td><input type='text' id='address'/> </td> </tr>
+    <tr><td>Title:</td> <td><input type='text' id='title'/> </td> </tr>
+    <tr><td></td><td><input type='button' value='Save' onclick='myfun()'/></td></tr>
+  </table>
+</div>
+
+<!--<script>-->
+//    handler = Gmaps.build('Google');
+//    handler.buildMap({ provider: {}, internal: {id: 'map'}}, function(){
+//        markers = handler.addMarkers(<%=raw @hash.to_json %>, { draggable: true});
+//        handler.map.centerOn({lat: 31.5546, lng: 74.3572}) //center on Big ben
+//        handler.bounds.extendWith(markers);
+//        handler.fitMapToBounds();
+//
+//    });
+//
+<!--</script>-->
+
+
+
+

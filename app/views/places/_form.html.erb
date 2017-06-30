@@ -1,0 +1,47 @@
+<%= form_for @place do |f| %>
+    <fieldset class="form-group" style="width: 50%; border-radius: 15px; border: outset 15px silver">
+    <fieldset class="form-group">
+      <div class="col-sm-1">
+        <%= f.label :title %>
+      </div>
+      <%= f.text_field :title, class: "form-control" %>
+    </fieldset>
+
+    <fieldset class="form-group">
+      <div class="col-sm-1">
+        <%= f.label :visited_by %>
+      </div>
+      <%= f.text_field :visited_by, class: "form-control" %>
+    </fieldset>
+
+    <fieldset class="form-group">
+      <div class="col-sm-1">
+        <%= f.label :address, 'Address' %>
+      </div>
+      <%= f.text_field :address, class: "form-control" %>
+      <small class="text-muted">You can also enter IP. Your IP is <%= request.ip %></small>
+    </fieldset>
+
+    <fieldset class="form-group">
+      <div class="col-sm-1">
+        <%= f.label :latitude %>
+      </div>
+
+      <div class="col-sm-3">
+        <%= f.text_field :latitude, class: "form-control" %>
+      </div>
+    </fieldset>
+    <fieldset class="form-group">
+      <div class="col-sm-1">
+        <%= f.label :longitude %>
+      </div>
+
+      <div class="col-sm-3">
+        <%= f.text_field :longitude, class: "form-control" %>
+      </div>
+    </fieldset>
+
+
+    <%= f.submit 'Add Place!', class: 'btn btn primary'%>
+    </fieldset>
+<% end %>
